@@ -2,6 +2,23 @@ import serial
 import time
 import logging
 
+def crazy_shift(n):
+    # hold on to your papers
+
+    high = (n << 1) & ~15 # shift by 1 to the left all the bits from the 4th and higher.
+    low = n & 7  # the previous operation loses the first 3 bits, so here we isolate them
+    whole = high | low # and finally here we merge the bits from the previous two operations
+
+    # in summary:
+    # any number has a binary form, for example number 12 is
+    # 12-> 0000 1100 
+    #           ^
+    # the amplifier needs the 4th digit to always be zero
+    # so we insert a 0 at the 4th place, shiting everything left of the 4th position to the left by 1 bit.
+
+    # end of crazy tricks
+    return whole
+
 
 class Trigger:
     def __init__(self, serial_device, shouldTrigger, labels={}):
@@ -16,7 +33,10 @@ class Trigger:
 
     def _write(self, n):
         if self.shouldTrigger:
-            self._port.write([n])
+
+            shifted = crazy_shift(n)
+
+            self._port.write([shifted])
             time.sleep(self._delay)
             self._port.write([0x00])
         else:
@@ -52,7 +72,7 @@ class Trigger:
         }
 
 
-BASE = 63  # this because BrainAmp uses 255 for reset; otherwise would have used 64
+BASE = 32  # this because BrainAmp uses 255 for reset; otherwise would have used 64
 
 # What we do: the first digit of a trigger indicates if its a normal trigger(0) or if its part of an ID number (1).
 # The second digit indicates if it is one of many (0) or the last number of a trigger ID sequence (1)
@@ -78,14 +98,14 @@ def id2triggers(i):
 
     # flip leftmost bit to 1
 
-    triggers = [t + 128 for t in triggers]
+    triggers = [t + 64 for t in triggers]
 
     # flip the second-to-leftmost bit of the last trigger (byte)
-    triggers[-1] += 64
+    triggers[-1] += 32
 
     return triggers
 
-
+# all 128s should be 64s and all 64s should be 32s to decode "correctly"
 def triggers2id(triggers):
 
     for pos, trigger in enumerate(triggers):
