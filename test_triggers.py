@@ -6,9 +6,10 @@ from config import CONF
 
 trigger = Trigger(CONF["trigger"]["serial_device"],
                   CONF["sendTriggers"], CONF["trigger"]["labels"])
-n = 1000
+n = 500
 
-for i in range(n):
-    trigger.send("Stim")
+for i in range(1,n):
+    trigger.send(i)
+    core.wait(1)
 
 

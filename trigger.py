@@ -23,9 +23,14 @@ class Trigger:
             print("trigger: ", n)
 
     def send(self, name):
-        trigger = self._labels[name]
-        if trigger >= 128:
-            raise ValueError("Manual triggers have to be < 128")
+        if isinstance(name, str):
+            trigger = self._labels[name]
+            
+        elif isinstance(name, int):
+            trigger = name
+        else:
+            print(type(name))
+            return
         self._write(trigger)
 
     def reset(self):
